@@ -23,9 +23,9 @@ def str2bright(v):
         raise argparse.ArgumentTypeError('L/M/H or l/m/h or 0-2 expected.')
 
 if __name__ == "__main__":
-    arg_parser = argparse.ArgumentParser(description="O2Ring BLE Downloader")
+    arg_parser = argparse.ArgumentParser(description="O2Ring BLE Downloader", epilog='Setting either --hr-alert-high or --hr-alert-low to 0 and leaving the other unset disables Heart Rate vibration alerts.  If one is 0 and the other is >0 then the 0 is ignored.')
     #arg_parser.add_argument('mac_address', help="MAC address of device to connect")
-    arg_parser.add_argument( '-s', '--scan', help='Scan Time (Seconds)', type=int, metavar='[seconds]' )
+    arg_parser.add_argument( '-s', '--scan', help='Scan Time (Seconds)', type=int, metavar='[scan time]' )
     arg_parser.add_argument( '-v', '--verbose', help='increase output verbosity (repeat to increase)', action="count", default=0 )
     arg_parser.add_argument( '-e', '--ext', help='file extension for downloaded files (default: o2r)', default='o2r', metavar='EXT' )
     #arg_parser.add_argument( '--o2-alert', help='Enable/Disable O2 vibration alerts', type=str2bool, metavar='[bool]' )

@@ -69,7 +69,7 @@ class o2state:
             else:
                 batts = ('% 3d' % batt) + '%'
 
-            print( '[%s] O2 %3d%%, HR %3d, Perfusion Idx %3d, motion %3d, batt %s' % (self.dev.name, o2, hr, hr_strength, motion, batts) )
+            print( '[%s] SpO2 %3d%%, HR %3d bpm, Perfusion Idx %3d, motion %3d, batt %s' % (self.dev.name, o2, hr, hr_strength, motion, batts) )
 
             if( (o2 > 100) or (o2 < 10) or (not finger_present) ):
                 self.quiet_cfg = True
