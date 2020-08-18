@@ -7,8 +7,8 @@ This Python app downloads files from and reconfigures settings on Wellue O2Ring 
 ### Installing
 On Debian Buster all I had to do to install the GATT SDK was 
 ```
-sudo pip3 install gatt
 sudo apt-get install python3-dbus
+sudo pip3 install gatt
 ```
 To run this app just download it and run `python3 o2ring.py`.  Currently the settings need to be passed on the command line
 ```
@@ -24,7 +24,7 @@ optional arguments:
   -h, --help            show this help message and exit
   -s [scan time], --scan [scan time]
                         Scan Time (Seconds)
-  -v, --verbose         increase output verbosity (repeat to increase)
+  -v, --verbose         increase output verbosity (repeat for more)
   -e EXT, --ext EXT     file extension for downloaded files (default: o2r)
   --o2-alert [0-100]    O2 vibration alert at this % (0-100, 0 = disabled)
   --hr-alert-high [0-200]
