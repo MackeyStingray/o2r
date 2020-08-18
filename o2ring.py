@@ -25,9 +25,11 @@ def str2bright(v):
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(description="O2Ring BLE Downloader", epilog='Setting either --hr-alert-high or --hr-alert-low to 0 and leaving the other unset disables Heart Rate vibration alerts.  If one is 0 and the other is >0 then the 0 is ignored.')
     #arg_parser.add_argument('mac_address', help="MAC address of device to connect")
-    arg_parser.add_argument( '-s', '--scan', help='Scan Time (Seconds)', type=int, metavar='[scan time]' )
     arg_parser.add_argument( '-v', '--verbose', help='increase output verbosity (repeat to increase)', action="count", default=0 )
-    arg_parser.add_argument( '-e', '--ext', help='file extension for downloaded files (default: o2r)', default='o2r', metavar='EXT' )
+    arg_parser.add_argument( '-s', '--scan', help='Scan Time (Seconds, 0 = forever, default = 15)', type=int, metavar='[scan time]', default=15 )
+    arg_parser.add_argument( '-m', '--multi', help='Keep scanning for multiple devices', action="count", default=0 )
+    arg_parser.add_argument( '-p', '--prefix', help='Downloaded file prefix (default: "[BT Name] - ")', metavar='PREFIX' )
+    arg_parser.add_argument( '-e', '--ext', help='Downloaded file extension (default: o2r)', default='o2r', metavar='EXT' )
     #arg_parser.add_argument( '--o2-alert', help='Enable/Disable O2 vibration alerts', type=str2bool, metavar='[bool]' )
     arg_parser.add_argument( '--o2-alert', help='O2 vibration alert at this %% (0-100, 0 = disabled)', type=int, metavar='[0-100]', choices=range(0,101) )
     #arg_parser.add_argument( '--hr-alert', help='Enable/Disable Heart Rate vibration alerts', type=str2bool, metavar='[bool]' )
@@ -47,20 +49,20 @@ if __name__ == "__main__":
     else:
         stop_scanning_at = 0
 
-    #print(sdfsdf.sdfdsf)
     print("Connecting...")
 
     manager = o2r.O2DeviceManager(adapter_name='hci0')
     manager.verbose = args.verbose + 1
     manager.queue = queue.Queue()
 
-    server4t = threading.Thread(target=manager.run)
-    server4t.setDaemon(True)
-    server4t.start()
+    manager_thread = threading.Thread(target=manager.run)
+    manager_thread.setDaemon(True)
+    manager_thread.start()
 
     #manager.start_discovery( ['00001801-0000-1000-8000-00805f9b34fb'] )
     manager.start_discovery()
-
+    scanning = True
+    multi = int(args.multi) > 0
     rings = {}
     want_exit = False
     run = True
@@ -68,9 +70,9 @@ if __name__ == "__main__":
     try:
         while run:
             try:
-                d = manager.queue.get(True, 1)
+                cmd = manager.queue.get(True, 1)
             except queue.Empty:
-                d = None
+                cmd = None
             except KeyboardInterrupt:
                 if( want_exit ):
                     traceback.print_exc()
@@ -79,30 +81,47 @@ if __name__ == "__main__":
                 print('Shutting Down')
                 want_exit = True
                 manager.stop_discovery()
+                scanning = False
                 for r in rings:
                     rings[r].close()
+
+                del rings
+                rings = {}
             except:
                 traceback.print_exc()
                 run = False
-                manager.stop_discovery()
+                if( scanning ):
+                    manager.stop_discovery()
+                    scanning = False
                 break
 
-            if( d is None ):
+            if( cmd is None ):
                 pass
-            elif( d[1] is 'READY' ):
-                if( d[0] in rings ):
-                    rings[d[0]].close()
-                rings[d[0]] = o2r.o2state( d[0], d[2], args )
-            elif( d[1] is 'DISCONNECT' ):
-                del rings[d[0]]
-            elif( d[1] is 'BTDATA' ):
-                rings[d[0]].recv( d[2] )
             else:
-                print('unhandled:', d)
+                (ident, command, data) = cmd
+
+                if( command is 'READY' ):
+                    if( 'verbose' not in data ):
+                        data['verbose'] = args.verbose
+                    if( ident in rings ):
+                        rings[ident].close()
+                    rings[ident] = o2r.o2state( data['name'], data, args )
+                    if( not multi ):
+                        manager.stop_discovery()
+                        scanning = False
+                elif( command is 'DISCONNECT' ):
+                    rings[ident].close()
+                    del rings[ident]
+                    if( (not scanning) and len(rings) < 1 ):
+                        want_exit = True
+                elif( command is 'BTDATA' ):
+                    rings[ident].recv( data )
+                else:
+                    print('unhandled command:', cmd)
 
             for r in rings:
-                if( rings[r].dev.pkt is None ):
-                    rings[r].check()
+                #if( rings[r].dev.pkt is None ):
+                rings[r].check()
 
             if( want_exit and len(rings) == 0 ):
                 run = False
@@ -110,6 +129,7 @@ if __name__ == "__main__":
 
             if( (stop_scanning_at > 0) and (stop_scanning_at <= time.time()) ):
                 stop_scanning_at = 0
+                scanning = False
                 manager.stop_discovery()
                 if( len(rings) < 1 ):
                     print('No devices found!')
@@ -118,17 +138,19 @@ if __name__ == "__main__":
     except:
         traceback.print_exc()
 
+    if( scanning ):
+        manager.stop_discovery()
+
     #print(manager.devices())
-    print('disconnecting')
-    #device.disconnect()
+    print('disconnecting all')
     for dev in manager.devices():
-        print('disconnecting', dev.mac_address)
+        print('disconnecting:', dev.mac_address)
         dev.disconnect()
 
-    time.sleep(1)
+    time.sleep(0.5)
 
     print('stopping')
     manager.stop()
 
     print('joining')
-    print(server4t.join(5))
+    print(manager_thread.join(5))

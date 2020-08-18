@@ -7,8 +7,16 @@ class o2cmd:
         cmd = '{"SetTIME":"%s"}' % time.strftime( TIME_FORMAT )
         return o2pkt(CMD_CONFIG, data=cmd)
 
+    def SetConfig( cfg ):
+        if( len(cfg) < 1 ):
+            return None
 
-
+        upstr = ''
+        for i in update:
+            upstr += ',"%s":"%s"' % (i, str(update[i]))
+        upstr = '{' + upstr[1:] + '}'
+        #print(len(upstr), upstr)
+        return o2pkt(CMD_CONFIG, data=upstr)
 
 
 

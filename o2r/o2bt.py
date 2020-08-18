@@ -7,11 +7,14 @@ import queue
 from .defines import *
 
 class O2BTDevice(gatt.Device):
-    def send_packet(self, pkt):
-        self.pkt_queue.put(pkt)
+    def busy( self ):
+        return self.pkt is not None
+
+    def send_packet( self, pkt ):
+        self.pkt_queue.put( pkt )
         self._start_packet()
 
-    def _start_packet(self):
+    def _start_packet( self ):
         if self.pkt is None:
             try:
                 self.pkt = self.pkt_queue.get(False)
@@ -43,7 +46,7 @@ class O2BTDevice(gatt.Device):
         print("[%s] Discovered: %s" % (self.mac_address, self.name) )
 
         if( len(self.name) < 4 ):
-            self.name = self.mac_address,
+            self.name = self.mac_address
 
         if( (self.verbose or self.manager.verbose) > 1 ):
             #for i in ('Name','Icon','Class','RSSI', 'UUIDs'):
@@ -161,7 +164,11 @@ class O2BTDevice(gatt.Device):
         if( (self.verbose or self.manager.verbose) > 3 ):
             print('[%s] Characteristic' % self.name, characteristic.uuid, 'enable notifications ok')
 
-        (self.queue or self.manager.queue).put((self.mac_address, 'READY', self))
+        self.name = self.alias() or self.mac_address
+        if( len(self.name) < 4 ):
+            self.name = self.mac_address
+
+        (self.queue or self.manager.queue).put((self.mac_address, 'READY', {'name':self.name, 'mac':self.mac_address, 'self':self, 'verbose':(self.verbose or self.manager.verbose), 'send':self.send_packet, 'busy':self.busy}))
 
 
     def disconnect_succeeded( self ):
