@@ -196,26 +196,30 @@ class O2DeviceManager(gatt.DeviceManager):
 
     def make_device(self, mac_address):
         dev = O2BTDevice(mac_address=mac_address, manager=self, managed=False)
-        uuids = dev.get_prop('UUIDs')
         valid = False
+        dev.name = dev.alias() or mac_address
+        dev.notified = False
+        dev.rssi = -999
+        dev.verbose = None
+        dev.queue = None
+        dev.write = None
+        dev.pkt = None
 
-        #print(uuids)
-        
+        uuids = dev.get_prop('UUIDs')
+
         if uuids is not None and BLE_MATCH_UUID in uuids and BLE_SERVICE_UUID in uuids:
             valid = True
 
-        #if()
-        #valid = False
+        # We might not have the list of UUIDs yet, so also check by name
+        if( 'O2Ring' in dev.name ):
+            valid = True
+
+        if( self.verbose > 4 ):
+            print('Considering', mac_address, dev.name, uuids, valid)
 
         if valid:
             print("Adding device", mac_address)
-            dev.name = mac_address
-            dev.notified = False
-            dev.rssi = -999
-            dev.verbose = None
-            dev.queue = None
-            dev.write = None
-            dev.pkt = None
+            #dev.connect()
             dev.pkt_queue = queue.Queue()
             self._manage_device( dev )
             return dev

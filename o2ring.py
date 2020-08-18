@@ -58,7 +58,7 @@ if __name__ == "__main__":
     server4t.setDaemon(True)
     server4t.start()
 
-    #manager.start_discovery( dbus.Array([dbus.String('00001801-0000-1000-8000-00805f9b34fb')]) )
+    #manager.start_discovery( ['00001801-0000-1000-8000-00805f9b34fb'] )
     manager.start_discovery()
 
     rings = {}
