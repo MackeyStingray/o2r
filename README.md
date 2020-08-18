@@ -81,8 +81,8 @@ Starting up for c8:07:5f:xx:xx:xx
 [O2Ring 45xx] Time off by 11 seconds, updating
 [O2Ring 45xx] File List is now ['20200817095111', '20200817225251']
 [O2Ring 45xx] Already Have File "O2Ring 45xx - 20200817095111.o2r"
-[O2Ring 4538] Requesting File 20200817225251, saving to "O2Ring 45xx - 20200817225251.o2r"
-[O2Ring 4538] File 20200817225251 Opened, Size 1750 -----------------------------------------------|
+[O2Ring 45xx] Requesting File 20200817225251, saving to "O2Ring 45xx - 20200817225251.o2r"
+[O2Ring 45xx] File 20200817225251 Opened, Size 1750 -----------------------------------------------|
 |==================================================================================================|
 [O2Ring 45xx] O2  98%, HR  81, Perfusion Idx   0, motion   0, batt  97%
 [O2Ring 45xx] O2  98%, HR  81, Perfusion Idx   0, motion   0, batt  97%
