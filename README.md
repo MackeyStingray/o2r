@@ -44,7 +44,7 @@ unset disables Heart Rate vibration alerts. If one is 0 and the other is >0
 then the 0 is ignored.
 ```
 ```
-$ python3 o2ring.py -s 5
+$ python3 o2ring.py
 Connecting...
 Adding device c8:07:5f:xx:xx:xx
 [c8:07:5f:xx:xx:xx] Discovered: O2Ring 45xx
