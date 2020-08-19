@@ -12,8 +12,8 @@ class o2cmd:
             return None
 
         upstr = ''
-        for i in update:
-            upstr += ',"%s":"%s"' % (i, str(update[i]))
+        for i in cfg:
+            upstr += ',"%s":"%s"' % (i, str(cfg[i]))
         upstr = '{' + upstr[1:] + '}'
         #print(len(upstr), upstr)
         return o2pkt(CMD_CONFIG, data=upstr)

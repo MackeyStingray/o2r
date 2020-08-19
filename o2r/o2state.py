@@ -97,8 +97,8 @@ class o2state:
                 print( '[%s] Time off by %d seconds, updating' % (self.name, tdelta) )
                 self.send_func( o2cmd.SetTime() )
 
-            self.check_settings( )
             self.need_cfg = False
+            self.check_settings( )
 
             self.add_files( self.current_cfg['FileList'] )
             self.get_file()
@@ -206,13 +206,12 @@ class o2state:
         if( self.read_file_in is not None ):
             return
 
-        ext = self.args.ext or 'o2r'
-        prefix = self.args.prefix or '%s - ' % self.name
-
+        ext = self.args.ext if self.args.ext is not None else 'vld'
+        prefix = self.args.prefix if self.args.prefix is not None else ('%s - ' % self.name)
         fname = self.get_next_filename()
 
         while( fname is not None ):
-            ofname = prefix + fname + '.' + ext
+            ofname = prefix + fname + ('.' if len(ext) > 0 else '') + ext
             if( not os.path.exists(ofname) ):
                 break
 

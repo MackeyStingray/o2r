@@ -29,9 +29,12 @@ if __name__ == "__main__":
     arg_parser.add_argument( '-s', '--scan', help='Scan Time (Seconds, 0 = forever, default = 15)', type=int, metavar='[scan time]', default=15 )
     arg_parser.add_argument( '-m', '--multi', help='Keep scanning for multiple devices', action="count", default=0 )
     arg_parser.add_argument( '-p', '--prefix', help='Downloaded file prefix (default: "[BT Name] - ")', metavar='PREFIX' )
-    arg_parser.add_argument( '-e', '--ext', help='Downloaded file extension (default: o2r)', default='o2r', metavar='EXT' )
+    arg_parser.add_argument( '-e', '--ext', help='Downloaded file extension (default: vld)', default='vld', metavar='EXT' )
+
+    # the O2Ring changes the o2 alert value to 90 if >95 is provided
     #arg_parser.add_argument( '--o2-alert', help='Enable/Disable O2 vibration alerts', type=str2bool, metavar='[bool]' )
-    arg_parser.add_argument( '--o2-alert', help='O2 vibration alert at this %% (0-100, 0 = disabled)', type=int, metavar='[0-100]', choices=range(0,101) )
+    arg_parser.add_argument( '--o2-alert', help='O2 vibration alert at this %% (0-95, 0 = disabled)', type=int, metavar='[0-95]', choices=range(0,101) )
+
     #arg_parser.add_argument( '--hr-alert', help='Enable/Disable Heart Rate vibration alerts', type=str2bool, metavar='[bool]' )
     arg_parser.add_argument( '--hr-alert-high', help='Heart Rate High vibration alert (0-200, 0 = disabled)', type=int, metavar='[0-200]', choices=range(0,201) )
     arg_parser.add_argument( '--hr-alert-low', help='Heart Rate Low vibration alert (0-200, 0 = disabled)', type=int, metavar='[0-200]', choices=range(0,201) )
