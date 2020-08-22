@@ -1,20 +1,5 @@
-#from o2r import o2file
-#import o2r.o2csv
 import o2r
 import csv, argparse, os
-
-def bin2csv( binfile, csvfile ):
-    try:
-        with o2r.o2file( binfile ) as binfp:
-            with open( csvfile, 'w' ) as csvfp:
-                print( 'Converting %s to %s' % (binfile, csvfile) )
-                csvout = csv.writer( csvfp, quoting=csv.QUOTE_MINIMAL )
-                csvout.writerow( o2r.o2csv.titles )
-                for rec in binfp.records():
-                    csvout.writerow( [ rec[x] for x in o2r.o2csv.fields ] + [''] )
-    #except FileNotFoundError as e:
-    except (FileNotFoundError,ImportError,EOFError) as e:
-        print( 'Error:', e )
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(description="O2Ring Data Converter", epilog='If neither --csv nor --bin are provided it will attempt to auto-detect and convert to the opposite' )
@@ -42,8 +27,10 @@ if __name__ == "__main__":
             else:
                 oftype = 'csv'
 
-        # basename()
-        outname = fname + '.' + oftype
+        if( fname[-4] == '.' ):
+            outname = fname[:-3] + oftype
+        else:
+            outname = fname + '.' + oftype
 
         if( (not args.force) and os.path.exists( outname ) ):
             print( 'Skipping %s: output file %s already exists' % (fname, outname) )
