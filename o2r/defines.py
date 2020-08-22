@@ -16,3 +16,10 @@ BLE_READ_UUID = '0734594a-a8e7-4b1a-a6b1-cd5243059a57'
 BLE_WRITE_UUID = '8b00ace7-eb0b-49b0-bbe9-9aee0a26e1a3'
 
 TIME_FORMAT = '%Y-%m-%d,%H:%M:%S'
+
+RECORD_SIZE_v3 = 5
+
+CSV_FIELDS = ( 'time', 'spo2', 'heartrate', 'motion', 'vibration', 'trailer' )
+CSV_TITLES = { 'time': 'Time', 'spo2': 'SpO2(%)', 'heartrate': 'Pulse Rate(bpm)', 'motion': 'Motion', 'vibration': 'Vibration' }
+CSV_TIMEFMT = '%I:%M:%S%p %b %d, %Y'
+
