@@ -14,7 +14,7 @@ To run this app just download it and run `python3 o2ring.py`.  Currently the set
 ```
 $ python3 o2ring.py -h
 usage: o2ring.py [-h] [-v] [-s [scan time]] [-m] [-p PREFIX] [-e EXT]
-                 [--o2-alert [0-100]] [--hr-alert-high [0-200]]
+                 [--o2-alert [0-95]] [--hr-alert-high [0-200]]
                  [--hr-alert-low [0-200]] [--vibrate [1-100]]
                  [--screen [bool]] [--brightness [L/M/H or 0-2]]
 
@@ -28,8 +28,8 @@ optional arguments:
   -m, --multi           Keep scanning for multiple devices
   -p PREFIX, --prefix PREFIX
                         Downloaded file prefix (default: "[BT Name] - ")
-  -e EXT, --ext EXT     Downloaded file extension (default: o2r)
-  --o2-alert [0-100]    O2 vibration alert at this % (0-100, 0 = disabled)
+  -e EXT, --ext EXT     Downloaded file extension (default: vld)
+  --o2-alert [0-95]     O2 vibration alert at this % (0-95, 0 = disabled)
   --hr-alert-high [0-200]
                         Heart Rate High vibration alert (0-200, 0 = disabled)
   --hr-alert-low [0-200]

@@ -214,15 +214,21 @@ class O2DeviceManager(gatt.DeviceManager):
 
         uuids = dev.get_prop('UUIDs')
 
-        if uuids is not None and BLE_MATCH_UUID in uuids and BLE_SERVICE_UUID in uuids:
-            valid = True
-
-        # We might not have the list of UUIDs yet, so also check by name
-        if( 'O2Ring' in dev.name ):
-            valid = True
-
         if( self.verbose > 4 ):
             print('Considering', mac_address, dev.name, uuids, valid)
+
+        if uuids is not None and BLE_MATCH_UUID in uuids and BLE_SERVICE_UUID in uuids:
+            valid = True
+        else:
+            # We might not have the list of UUIDs yet, so also check by name
+            names = ( 'Checkme_O2', 'CheckO2', 'SleepU', 'SleepO2', 'O2Ring', 'WearO2', 'KidsO2', 'BabyO2', 'Oxylink' )
+            for n in names:
+                if( n in dev.name ):
+                    if( self.verbose > 1 ):
+                        print( 'Found device by name:', n )
+
+                    valid = True
+                    break
 
         if valid:
             print("Adding device", mac_address)
