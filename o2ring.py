@@ -27,9 +27,11 @@ if __name__ == "__main__":
     #arg_parser.add_argument('mac_address', help="MAC address of device to connect")
     arg_parser.add_argument( '-v', '--verbose', help='increase output verbosity (repeat to increase)', action="count", default=0 )
     arg_parser.add_argument( '-s', '--scan', help='Scan Time (Seconds, 0 = forever, default = 15)', type=int, metavar='[scan time]', default=15 )
-    arg_parser.add_argument( '-m', '--multi', help='Keep scanning for multiple devices', action="count", default=0 )
+    arg_parser.add_argument( '--keep-going', help='Do not disconnect when finger is not present', action="store_true" )
+    arg_parser.add_argument( '-m', '--multi', help='Keep scanning for multiple devices', action="store_true" )
     arg_parser.add_argument( '-p', '--prefix', help='Downloaded file prefix (default: "[BT Name] - ")', metavar='PREFIX' )
     arg_parser.add_argument( '-e', '--ext', help='Downloaded file extension (default: vld)', default='vld', metavar='EXT' )
+    arg_parser.add_argument( '--csv', help='Convert downloaded file to CSV', action="store_true" )
 
     # the O2Ring changes the o2 alert value to 90 if >95 is provided
     #arg_parser.add_argument( '--o2-alert', help='Enable/Disable O2 vibration alerts', type=str2bool, metavar='[bool]' )
@@ -65,7 +67,7 @@ if __name__ == "__main__":
     #manager.start_discovery( ['00001801-0000-1000-8000-00805f9b34fb'] )
     manager.start_discovery()
     scanning = True
-    multi = int(args.multi) > 0
+    multi = args.multi
     rings = {}
     want_exit = False
     run = True
@@ -105,7 +107,7 @@ if __name__ == "__main__":
 
                 if( command is 'READY' ):
                     if( 'verbose' not in data ):
-                        data['verbose'] = args.verbose
+                        data['verbose'] = args.verbose + 1
                     if( ident in rings ):
                         rings[ident].close()
                     rings[ident] = o2r.o2state( data['name'], data, args )
@@ -147,8 +149,9 @@ if __name__ == "__main__":
     #print(manager.devices())
     print('disconnecting all')
     for dev in manager.devices():
-        print('disconnecting:', dev.mac_address)
-        dev.disconnect()
+        if( dev.is_connected() ):
+            print('disconnecting:', dev.mac_address)
+            dev.disconnect()
 
     time.sleep(0.5)
 

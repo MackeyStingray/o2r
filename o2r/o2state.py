@@ -3,6 +3,7 @@ import time, json, pprint, struct, os.path, datetime
 from .defines import *
 from .o2pkt import o2pkt
 from .o2cmd import o2cmd
+from .o2file import *
 
 class o2state:
     def __init__( self, name, data, args ):
@@ -11,6 +12,7 @@ class o2state:
         self.verbose = data['verbose']
         self.send_func = data['send']
         self.busy_func = data['busy']
+        self.disconnect_func = data['disconnect']
         self.args = args
         self.next_read = 0
         self.need_cfg = False
@@ -23,6 +25,8 @@ class o2state:
         self.read_fp = None
         self.read_size = 0
         self.read_want = 0
+        self.no_finger_count = 0
+        self.disconnect_at = 1
         print('Starting up for', self.name)
 
         self.send_func( o2pkt(CMD_INFO) )
@@ -77,9 +81,16 @@ class o2state:
             print( '[%s] SpO2 %3d%%, HR %3d bpm, Perfusion Idx %3d, motion %3d, batt %s' % (self.name, o2, hr, hr_strength, motion, batts) )
 
             if( (o2 > 100) or (o2 < 10) or (not finger_present) ):
-                self.quiet_cfg = True
-                self.send_func( o2pkt(CMD_INFO) )
-                self.req_time_str = time.strftime( TIME_FORMAT )
+                self.no_finger_count += 1
+                if( (self.no_finger_count > self.disconnect_at) and (not self.args.keep_going) ):
+                    self.disconnect_func()
+                else:
+                    self.quiet_cfg = True
+                    self.send_func( o2pkt(CMD_INFO) )
+                    self.req_time_str = time.strftime( TIME_FORMAT )
+            else:
+                self.no_finger_count = 0
+                self.disconnect_at = 11
                 
         elif( pkt.cmd == CMD_INFO ):
             self.current_cfg = json.loads( pkt.recv_data.decode('ascii').rstrip( ' \t\r\n\0' ) )
@@ -157,6 +168,28 @@ class o2state:
                 if( self.read_fp ):
                     self.read_fp.write(pkt.recv_data)
                     self.read_fp.close()
+
+                    if( self.args.csv ):
+                        infile = o2fileread( self.read_file_out )
+                        oftype = 'csv'
+
+                        if( self.read_file_out[-4] == '.' ):
+                            outname = self.read_file_out[:-3] + oftype
+                        else:
+                            outname = self.read_file_out + '.' + oftype
+
+                        if( os.path.exists( outname ) ):
+                            print( 'Skipping %s: output file %s already exists' % (self.read_file_out, outname) )
+                        else:
+                            outfile = o2filewrite( outname, oftype )
+                            print( 'Converting %s (type: %s) to %s (type: %s)' % (self.read_file_out, infile.ftype, outname, outfile.ftype) )
+
+                            for rec in infile.records():
+                                outfile.writerow( rec )
+
+                            outfile.close()
+                        infile.close()
+
                 self.read_fp = None
                 self.read_file_in = None
                 self.read_file_out = None

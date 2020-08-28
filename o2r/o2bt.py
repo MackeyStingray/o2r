@@ -89,10 +89,6 @@ class O2BTDevice(gatt.Device):
         super().connect_failed(error)
         print("[%s] Connection failed: %s" % (self.name, str(error)))
 
-    def disconnect_succeeded(self):
-        super().disconnect_succeeded()
-        print("[%s] Disconnected" % (self.name))
-
     def services_resolved(self):
         super().services_resolved()
 
@@ -168,10 +164,15 @@ class O2BTDevice(gatt.Device):
         if( len(self.name) < 4 ):
             self.name = self.mac_address
 
-        (self.queue or self.manager.queue).put((self.mac_address, 'READY', {'name':self.name, 'mac':self.mac_address, 'self':self, 'verbose':(self.verbose or self.manager.verbose), 'send':self.send_packet, 'busy':self.busy}))
+        (self.queue or self.manager.queue).put((self.mac_address, 'READY', {'name':self.name, 'mac':self.mac_address, 'self':self, 'verbose':(self.verbose or self.manager.verbose), 'send':self.send_packet, 'busy':self.busy, 'disconnect':self.disconnect}))
 
+
+    def disconnect( self ):
+        print( '[%s] Disconnecting' % self.name)
+        super().disconnect()
 
     def disconnect_succeeded( self ):
+        print( '[%s] Disconnected' % self.name )
         super().disconnect_succeeded()
         (self.queue or self.manager.queue).put((self.mac_address, 'DISCONNECT', self))
 
