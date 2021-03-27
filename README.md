@@ -1,23 +1,27 @@
-# Python BLE client for Wellue / Viatom pulse oximeters
-This Python app downloads files from and reconfigures settings on Wellue O2Ring / Viatom Health Ring pulse oximeters.  It requires the [Bluetooth GATT SDK for Python](https://github.com/getsenic/gatt-python) which in turn requires D-Bus and Bluez and thus currently only supports Linux.  The downloaded binary files can be imported into [OSCAR](https://www.sleepfiles.com/OSCAR).
+# Python BLE client for Wellue / Viatom pulse oximeters (FORK, uses bleak)
+
+It is a fork of [project of same name](https://github.com/MackeyStingray/o2r) to support bleak for use on Windows and maybe Mac in addition to Linux.
+Kudos to the original author for figuring out all the BLE stuff and writing an awesome program.
+
+The thread (and post) on apneaboard that discusses some stuff relating to o2ring and o2r: [http://www.apneaboard.com/forums/Thread-Added-a-new-pulse-oximeter-importer?pid=388834#pid388834](http://www.apneaboard.com/forums/Thread-Added-a-new-pulse-oximeter-importer?pid=388834#pid388834).
+
+The license is unchanged (GPLv3 License).
+
+This Python app downloads files from and reconfigures settings on Wellue O2Ring / Viatom Health Ring pulse oximeters.  It requires the [Bluetooth Low Energy platform Agnostic Klient (bleak)](https://github.com/hbldh/bleak).
 
 ### Prerequisites
-[Python 3.4+](https://www.python.org) and [Bluetooth GATT SDK for Python](https://github.com/getsenic/gatt-python)
+[Python 3.6-3.8](https://www.python.org) and [Bluetooth Low Energy platform Agnostic Klient (bleak)](https://github.com/hbldh/bleak).  It did not work on Python 3.9 on Windows for me.
 
 ### Installing
-On Debian Buster all I had to do to install the GATT SDK was 
+On Windows all I had to do to install bleak was 
 ```
-sudo apt-get install python3-dbus
-sudo pip3 install gatt
+sudo pip3 install bleak
 ```
 To run this app just download it and run `python3 o2ring.py`.  Currently the settings need to be passed on the command line
 ```
 $ python3 o2ring.py -h
-usage: o2ring.py [-h] [-v] [-s [scan time]] [--keep-going] [-m] [-p PREFIX]
-                 [-e EXT] [--csv] [--o2-alert [0-95]]
-                 [--hr-alert-high [0-200]] [--hr-alert-low [0-200]]
-                 [--vibrate [1-100]] [--screen [bool]]
-                 [--brightness [L/M/H or 0-2]]
+usage: o2ring.py [-h] [-v] [-s [scan time]] [--keep-going] [-m] [-p PREFIX] [-e EXT] [--csv] [--o2-alert [0-95]] [--hr-alert-high [0-200]]
+                 [--hr-alert-low [0-200]] [--vibrate [1-100]] [--screen [bool]] [--brightness [L/M/H or 0-2]]
 
 O2Ring BLE Downloader
 
@@ -25,7 +29,7 @@ optional arguments:
   -h, --help            show this help message and exit
   -v, --verbose         increase output verbosity (repeat to increase)
   -s [scan time], --scan [scan time]
-                        Scan Time (Seconds, 0 = forever, default = 15)
+                        Scan Time (Seconds, 0 = forever, default = 30)
   --keep-going          Do not disconnect when finger is not present
   -m, --multi           Keep scanning for multiple devices
   -p PREFIX, --prefix PREFIX
@@ -42,60 +46,12 @@ optional arguments:
   --brightness [L/M/H or 0-2]
                         Screen Brightness (Low/Med/High)
 
-Setting either --hr-alert-high or --hr-alert-low to 0 and leaving the other
-unset disables Heart Rate vibration alerts. If one is 0 and the other is >0
-then the 0 is ignored.
+Setting either --hr-alert-high or --hr-alert-low to 0 and leaving the other unset disables Heart Rate vibration alerts. If one is 0 and the other is >0 then the
+0 is ignored.
 ```
 ```
 $ python3 o2ring.py --csv --keep-going
-Connecting...
-Adding device c8:07:5f:xx:xx:xx
-[c8:07:5f:xx:xx:xx] Discovered: O2Ring 45xx
-[O2Ring 45xx] New RSSI: -54
-[O2Ring 45xx] New RSSI: -63
-[O2Ring 45xx] Connected
-Starting up for c8:07:5f:xx:xx:xx
-[O2Ring 45xx] Config:
-{     'Application': '',
-      'BootloaderVer': '1.0.0.0',
-      'BranchCode': '24010000',
-      'CurBAT': '97%',
-      'CurBatState': '0',
-      'CurMode': '0',
-      'CurMotor': '40',
-      'CurOxiThr': '85',
-      'CurPedtar': '99999',
-      'CurState': '1',
-      'CurTIME': '2020-08-17,23:29:30',
-      'FileList': '20200817095111,20200817225251,',
-      'FileVer': '3',
-      'HRHighThr': '125',
-      'HRLowThr': '55',
-      'HRSwitch': '0',
-      'HardwareVer': 'AA',
-      'LightStr': '0',
-      'LightingMode': '0',
-      'Model': '1652',
-      'OxiSwitch': '1',
-      'Region': 'CE',
-      'SN': '20xxxx45xx',
-      'SPCPVer': '1.3',
-      'SoftwareVer': '1.4.0'}
-[O2Ring 45xx] Time off by 11 seconds, updating
-[O2Ring 45xx] File List is now ['20200817095111', '20200817225251']
-[O2Ring 45xx] Already Have File "O2Ring 45xx - 20200817095111.vld"
-[O2Ring 45xx] Requesting File 20200817225251, saving to "O2Ring 45xx - 20200817225251.vld"
-[O2Ring 45xx] File 20200817225251 Opened, Size 1750 -----------------------------------------------|
-|==================================================================================================|
-Converting O2Ring 45xx - 20200817225251.vld (type: vld3) to O2Ring 45xx - 20200817225251.csv (type: csv)
-[O2Ring 45xx] O2  98%, HR  81, Perfusion Idx   0, motion   0, batt  97%
-[O2Ring 45xx] O2  98%, HR  81, Perfusion Idx   0, motion   0, batt  97%
-[O2Ring 45xx] O2  98%, HR  81, Perfusion Idx   0, motion   0, batt  97%
-[O2Ring 45xx] O2  98%, HR  81, Perfusion Idx   0, motion   0, batt  97%
-[O2Ring 45xx] O2  98%, HR  81, Perfusion Idx   0, motion   0, batt  97%
-[O2Ring 45xx] O2  98%, HR  81, Perfusion Idx   0, motion   0, batt  97%
-[O2Ring 45xx] O2  98%, HR  81, Perfusion Idx  11, motion   0, batt  97%
-[O2Ring 45xx] O2  98%, HR  80, Perfusion Idx   9, motion   0, batt  97%
+output is almost the same as the non-fork/upstream o2r
 ```
 ### Known issues
 Logging of realtime data is not implemented yet
