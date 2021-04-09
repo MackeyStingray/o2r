@@ -104,7 +104,7 @@ class o2state:
             sent_time = datetime.datetime(*time.strptime( self.req_time_str, TIME_FORMAT )[:6])
             tdelta = (o2_time - sent_time).total_seconds()
 
-            if( abs(tdelta) > 10 ):
+            if( abs(tdelta) > 1.0 ):
                 print( '[%s] Time off by %d seconds, updating' % (self.name, tdelta) )
                 self.send_func( o2cmd.SetTime() )
 
