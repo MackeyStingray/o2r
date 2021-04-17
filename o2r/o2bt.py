@@ -165,26 +165,24 @@ class O2DeviceManager:
             valid = True
             break
 
-        if not valid:
-          return
+      if not valid:
+        return
 
-        print(f"Adding device {device.address}")
+      print(f"Adding device {device.address}")
 
-        dev = O2BTDevice(address_or_ble_device=device, timeout=10.0, disconnected_callback=O2BTDevice.on_disconnect)
-        dev.mac_address = device.address
-        dev.manager = self
-        dev.name = name
-        dev.notified = False
-        dev.rssi = device.rssi if device.rssi is not None else -999
-        dev.write = None
-        dev.disconnect_pending = False
-        dev.pkt = None
-        dev.pkt_queue = queue.Queue()
-        self.devices[device.address] = dev
+      dev = O2BTDevice(address_or_ble_device=device, timeout=10.0, disconnected_callback=O2BTDevice.on_disconnect)
+      dev.mac_address = device.address
+      dev.manager = self
+      dev.name = name
+      dev.notified = False
+      dev.rssi = device.rssi if device.rssi is not None else -999
+      dev.write = None
+      dev.disconnect_pending = False
+      dev.pkt = None
+      dev.pkt_queue = queue.Queue()
+      self.devices[device.address] = dev
 
-        dev.connect()
-
-        dev = self.devices[device.address]
+      dev.connect()
     else:
       dev = self.devices[device.address]
 
