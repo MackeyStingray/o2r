@@ -2,6 +2,8 @@ import o2r
 import threading, time, queue, traceback
 import argparse
 
+import asyncio
+
 def str2bool(v):
     if isinstance(v, bool):
        return v
@@ -22,11 +24,11 @@ def str2bright(v):
     else:
         raise argparse.ArgumentTypeError('L/M/H or l/m/h or 0-2 expected.')
 
-if __name__ == "__main__":
+async def main():
     arg_parser = argparse.ArgumentParser(description="O2Ring BLE Downloader", epilog='Setting either --hr-alert-high or --hr-alert-low to 0 and leaving the other unset disables Heart Rate vibration alerts.  If one is 0 and the other is >0 then the 0 is ignored.')
     #arg_parser.add_argument('mac_address', help="MAC address of device to connect")
     arg_parser.add_argument( '-v', '--verbose', help='increase output verbosity (repeat to increase)', action="count", default=0 )
-    arg_parser.add_argument( '-s', '--scan', help='Scan Time (Seconds, 0 = forever, default = 15)', type=int, metavar='[scan time]', default=15 )
+    arg_parser.add_argument( '-s', '--scan', help='Scan Time (Seconds, 0 = forever, default = 30)', type=int, metavar='[scan time]', default=30 )
     arg_parser.add_argument( '--keep-going', help='Do not disconnect when finger is not present', action="store_true" )
     arg_parser.add_argument( '-m', '--multi', help='Keep scanning for multiple devices', action="store_true" )
     arg_parser.add_argument( '-p', '--prefix', help='Downloaded file prefix (default: "[BT Name] - ")', metavar='PREFIX' )
@@ -56,16 +58,11 @@ if __name__ == "__main__":
 
     print("Connecting...")
 
-    manager = o2r.O2DeviceManager(adapter_name='hci0')
+    manager = o2r.O2DeviceManager()
     manager.verbose = args.verbose + 1
-    manager.queue = queue.Queue()
+    manager.queue = asyncio.Queue()
 
-    manager_thread = threading.Thread(target=manager.run)
-    manager_thread.setDaemon(True)
-    manager_thread.start()
-
-    #manager.start_discovery( ['00001801-0000-1000-8000-00805f9b34fb'] )
-    manager.start_discovery()
+    await manager.start_discovery()
     scanning = True
     multi = args.multi
     rings = {}
@@ -75,28 +72,32 @@ if __name__ == "__main__":
     try:
         while run:
             try:
-                cmd = manager.queue.get(True, 1)
-            except queue.Empty:
+                cmd = await asyncio.wait_for(manager.queue.get(), 1.0)
+            except asyncio.TimeoutError:
                 cmd = None
-            except KeyboardInterrupt:
+            #except KeyboardInterrupt:
+            except asyncio.CancelledError:
                 if( want_exit ):
                     traceback.print_exc()
                     run = False
                     break
                 print('Shutting Down')
                 want_exit = True
-                manager.stop_discovery()
-                scanning = False
+                if( scanning ):
+                    await manager.stop_discovery()
+                    scanning = False
                 for r in rings:
                     rings[r].close()
 
                 del rings
                 rings = {}
+
+                break
             except:
                 traceback.print_exc()
                 run = False
                 if( scanning ):
-                    manager.stop_discovery()
+                    await manager.stop_discovery()
                     scanning = False
                 break
 
@@ -105,27 +106,27 @@ if __name__ == "__main__":
             else:
                 (ident, command, data) = cmd
 
-                if( command is 'READY' ):
+                if( command == 'READY' ):
                     if( 'verbose' not in data ):
                         data['verbose'] = args.verbose + 1
                     if( ident in rings ):
                         rings[ident].close()
                     rings[ident] = o2r.o2state( data['name'], data, args )
-                    if( not multi ):
-                        manager.stop_discovery()
+                    if( not multi and scanning ):
+                        await manager.stop_discovery()
                         scanning = False
-                elif( command is 'DISCONNECT' ):
+                elif( command == 'DISCONNECT' ):
                     rings[ident].close()
                     del rings[ident]
                     if( (not scanning) and len(rings) < 1 ):
                         want_exit = True
-                elif( command is 'BTDATA' ):
+                elif( command == 'BTDATA' ):
                     rings[ident].recv( data )
                 else:
                     print('unhandled command:', cmd)
 
             for r in rings:
-                #if( rings[r].dev.pkt is None ):
+                #if( not rings[r].dev.awaiting_response ):
                 rings[r].check()
 
             if( want_exit and len(rings) == 0 ):
@@ -134,8 +135,9 @@ if __name__ == "__main__":
 
             if( (stop_scanning_at > 0) and (stop_scanning_at <= time.time()) ):
                 stop_scanning_at = 0
-                scanning = False
-                manager.stop_discovery()
+                if( scanning ):
+                    scanning = False
+                    await manager.stop_discovery()
                 if( len(rings) < 1 ):
                     print('No devices found!')
                     want_exit = True
@@ -144,19 +146,27 @@ if __name__ == "__main__":
         traceback.print_exc()
 
     if( scanning ):
-        manager.stop_discovery()
+        await manager.stop_discovery()
 
-    #print(manager.devices())
+    #print(manager.devices.values())
     print('disconnecting all')
-    for dev in manager.devices():
-        if( dev.is_connected() ):
+    to_disconnect = []
+    for dev in manager.devices.values():
+        if( dev.is_connected ):
             print('disconnecting:', dev.mac_address)
-            dev.disconnect()
+            to_disconnect.append(dev.disconnect_async())
+    asyncio.gather(*to_disconnect)
 
-    time.sleep(0.5)
+    await asyncio.sleep(0.5)
 
-    print('stopping')
-    manager.stop()
-
-    print('joining')
-    print(manager_thread.join(5))
+if __name__ == "__main__":
+    # https://stackoverflow.com/questions/30765606/whats-the-correct-way-to-clean-up-after-an-interrupted-event-loop
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    task = asyncio.Task(main())
+    try:
+        loop.run_until_complete(task)
+    except KeyboardInterrupt:
+        task.cancel()
+        loop.run_until_complete(task)
+        task.exception()

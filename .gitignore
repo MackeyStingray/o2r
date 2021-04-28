@@ -1,0 +1,5 @@
+o2r/__pycache__/
+*.vld
+*.csv
+20*
+keep/
