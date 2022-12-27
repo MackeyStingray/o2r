@@ -1,14 +1,22 @@
 
+#Info and Configuration Commands
 CMD_INFO = 20 # 0x14 # 1, rx len = ~264, tx no data
 CMD_PING = 21 # 0x15 # 0, rx len = 12, tx no data
 CMD_CONFIG = 22 # 0x16 # 2, rx len = 12, tx JSON
-CMD_READ_SENSORS = 23 # 0x17 # 3, rx len = 21, tx no data
 CMD_FACTORY_DEFAULT = 24 # 0x18 # 0, rx len = 12, tx no data
+
+#Sensor Read / Realtime Data
+CMD_READ_SENSORS = 23 # 0x17 # 3, rx len = 21, tx no data
+CMD_RT_DATA = 27  # 0x1B rx len = ~275, tx no data
+# CMD_PPG_RT_DATA = 28  # 0x1C 
+
+#File Operations
 CMD_FILE_OPEN = 3 # rx len = 12, tx filename length and filename
 CMD_FILE_READ = 4 # tx block number
 CMD_FILE_CLOSE = 5 # tx no data
-#CMD_UNK = 255
 
+# Additional commands discoverable at 
+# https://github.com/viatomEcho/LepuBle/blob/2db64621969b436fcef5da992bd8728d72513b10/blepro/src/main/java/com/lepu/blepro/ble/cmd/OxyBleCmd.java#L19
 
 BLE_MATCH_UUID = '00001801-0000-1000-8000-00805f9b34fb'
 BLE_SERVICE_UUID = '14839ac4-7d7e-415c-9a42-167340cf2339'

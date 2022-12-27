@@ -5,10 +5,11 @@ from .defines import *
 
 class o2pkt:
     
-    def __init__(self, cmd, block=0, data=None):
+    def __init__(self, cmd, block=0, data=None, long=False):
         self.cmd = cmd
         self.block = block
         self.extra = data
+        self.long = long or False
         self.recv_buf = ""
         self.recv_want = None
         self.recv_cmd = None
@@ -17,7 +18,19 @@ class o2pkt:
         self.recv_data = b""
 
     def packetify( self ):
-        out = struct.pack( '<BBBHH', 0xAA, self.cmd, (self.cmd ^ 0xFF), self.block, len(self.extra or "") )
+        if self.long: # A Long packet is used in the realtime data commands
+            out = struct.pack(
+                '<5BHB', 
+                0xAA, 
+                self.cmd,
+                (self.cmd ^ 0xFF), 
+                0x00, 
+                0x00, 
+                0x01, 
+                0x00,  #Per Lepu 0 -> 125hz;  1-> 62.5hz
+            )
+        else:
+            out = struct.pack( '<3BHH', 0xAA, self.cmd, (self.cmd ^ 0xFF), self.block, len(self.extra or "") )
 
         if self.extra:
             out += bytes(self.extra, 'utf-8')
