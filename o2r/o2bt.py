@@ -9,6 +9,7 @@ import functools
 from .o2pkt import o2pkt
 
 class O2BTDevice(BleakClient):
+
   def busy(self):
     return self.pkt is not None
 
@@ -46,11 +47,11 @@ class O2BTDevice(BleakClient):
     if self.disconnect_pending or not self.is_connected:
       return
 
-    services = await self.get_services()
+    # services = await self.get_services()
 
     if self.manager.verbose > 1:
       print(f"[{self.name}] Resolved services")
-      for service in services:
+      for service in self.services:
         print(f"[{self.name}]\tService [{service.uuid}]")
         for characteristic in service.characteristics:
           print(f"[{self.name}]\t\tCharacteristic [{characteristic.uuid}]")
@@ -120,6 +121,7 @@ class O2BTDevice(BleakClient):
 
     print(f"[{self.name}] Disconnecting")
     await super().disconnect()
+    self.manager.queue.put_nowait((self.mac_address, "DISCONNECT", self))
 
   def disconnect(self):
     self.disconnect_pending = True
@@ -127,16 +129,15 @@ class O2BTDevice(BleakClient):
     asyncio.ensure_future(self.disconnect_async())
 
   def on_disconnect(self):
-    print(f"[{self.name}] Disconnected")
-    self.manager.queue.put_nowait((self.mac_address, "DISCONNECT", self))
+    print(f"[{self.address}] Disconnected")
+    
 
 # also see https://stackoverflow.com/questions/51762227/how-to-call-a-async-function-from-a-synchronized-code-python
 class O2DeviceManager:
   def __init__(self):
     self.pipe_down = []
     self.devices = {}
-    self.scanner = BleakScanner()
-    self.scanner.register_detection_callback(self.on_detection)
+    self.scanner = BleakScanner(detection_callback=self.on_detection)
 
   async def start_discovery(self):
     await self.scanner.start()

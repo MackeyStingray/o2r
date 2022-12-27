@@ -13,6 +13,7 @@ class o2state:
         self.send_func = data['send']
         self.busy_func = data['busy']
         self.disconnect_func = data['disconnect']
+        self.realtime = args.realtime
         self.args = args
         self.next_read = 0
         self.need_cfg = False
@@ -42,7 +43,7 @@ class o2state:
             print( '[%s] Command %d Failed!' % (self.name, pkt.cmd), pkt.recv_buf.hex() )
 
         if( pkt.cmd == CMD_READ_SENSORS ):
-            self.next_read = time.time() + 2.0
+            self.next_read = time.time() + 1.0
 
             # ffffff00000000600005000000
             # ffffff00000000620100000000
@@ -92,6 +93,16 @@ class o2state:
                 self.no_finger_count = 0
                 self.disconnect_at = 11
                 
+        elif( pkt.cmd == CMD_RT_DATA ):
+            ### Read in Realtime Data and save to .rt file
+            timestamp = datetime.datetime.utcnow().isoformat()
+            print(f"Realtime waveforms received at {timestamp}...")
+            realtime_filename = f"{self.name}_{self.req_time_str}.rt"
+            with open(realtime_filename, "a") as f:
+                f.write(timestamp)
+                f.write("|")
+                f.write(pkt.recv_data.hex())
+                f.write("\n")
         elif( pkt.cmd == CMD_INFO ):
             self.current_cfg = json.loads( pkt.recv_data.decode('ascii').rstrip( ' \t\r\n\0' ) )
 
@@ -121,7 +132,7 @@ class o2state:
             if( pkt.recv_cmd != 0 ):
                 print( '[%s] File Open Failed!' % self.name, self.read_file_in )
                 self.send_func( o2pkt(CMD_FILE_CLOSE) )
-                self.next_read = time.time() + 2.0
+                self.next_read = time.time() + 1.0
                 return
 
             self.read_block = 0
@@ -221,8 +232,10 @@ class o2state:
                 self.send_func( o2pkt(CMD_INFO) )
                 self.req_time_str = time.strftime( TIME_FORMAT )
             else:
-                self.next_read = time.time() + 2.0
+                self.next_read = time.time() + 1.0
                 self.send_func( o2pkt(CMD_READ_SENSORS) )
+                if self.realtime:
+                    self.send_func( o2pkt(CMD_RT_DATA, long=True) )
 
     def add_files( self, flist ):
         self.want_files.extend( [i for i in flist.split(',') if i] )

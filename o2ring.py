@@ -1,6 +1,7 @@
 import o2r
 import threading, time, queue, traceback
 import argparse
+import json
 
 import asyncio
 
@@ -34,7 +35,7 @@ async def main():
     arg_parser.add_argument( '-p', '--prefix', help='Downloaded file prefix (default: "[BT Name] - ")', metavar='PREFIX' )
     arg_parser.add_argument( '-e', '--ext', help='Downloaded file extension (default: vld)', default='vld', metavar='EXT' )
     arg_parser.add_argument( '--csv', help='Convert downloaded file to CSV', action="store_true" )
-
+    arg_parser.add_argument( '--realtime', help='Enable Realtime PPG data capture', action="store_true" )
     # the O2Ring changes the o2 alert value to 90 if >95 is provided
     #arg_parser.add_argument( '--o2-alert', help='Enable/Disable O2 vibration alerts', type=str2bool, metavar='[bool]' )
     arg_parser.add_argument( '--o2-alert', help='O2 vibration alert at this %% (0-95, 0 = disabled)', type=int, metavar='[0-95]', choices=range(0,101) )
@@ -48,8 +49,7 @@ async def main():
     arg_parser.add_argument( '--brightness', help='Screen Brightness (Low/Med/High)', type=str2bright, metavar='[L/M/H or 0-2]', choices=range(0,3) )
 
     args = arg_parser.parse_args()
-
-    print(args)
+    print("Arguments: ", json.dumps(vars(args), indent=4))
 
     if( args.scan and args.scan > 0 ):
         stop_scanning_at = time.time() + args.scan
